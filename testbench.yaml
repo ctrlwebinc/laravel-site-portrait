@@ -1,0 +1,27 @@
+# Workbench application used by the end-to-end interoperability test
+# (tests/e2e/interop.test.mjs) and for trying the package by hand:
+#   vendor/bin/testbench workbench:build
+#   vendor/bin/testbench serve --host=127.0.0.1 --port=8765
+providers:
+  - Ctrlweb\SitePortrait\SitePortraitServiceProvider
+
+migrations: true
+
+env:
+  APP_NAME: "Workbench Bakery"
+  APP_ENV: local
+  APP_KEY: base64:d29ya2JlbmNoLWtleS1mb3ItdGVzdHMtb25seS0wMDA=
+  APP_DEBUG: false
+  APP_URL: http://127.0.0.1:8765
+  DB_CONNECTION: sqlite
+  CACHE_STORE: file
+  SESSION_DRIVER: file
+  SITE_PORTRAIT_DEV_MODE: true
+  SITE_PORTRAIT_KEY_REFRESH_INTERVAL: 0
+
+workbench:
+  start: /site-portrait/v1/status
+  install: true
+  build:
+    - create-sqlite-db
+    - migrate:fresh

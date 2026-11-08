@@ -1,0 +1,64 @@
+{
+  "$comment": "SPDX-License-Identifier: CC-BY-4.0. Machine-readable test vectors of the Site Portrait protocol, version 1 (docs/PROTOCOL.md section 15). The keys are derived from fixed seeds and MUST NOT be used outside tests. Binary values: seeds in hex; x, kid, PKCE and endorsement signatures in base64url without padding; HTTP signatures in base64 with padding, inside RFC 8941 byte sequences.",
+  "protocol_version": "1",
+  "keys": {
+    "service": {
+      "seed_hex": "0101010101010101010101010101010101010101010101010101010101010101",
+      "x": "iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w",
+      "kid": "UDDReOZl1ipXAfp9wYsm13sDBMK5og--QWdBjzuf6o4"
+    },
+    "site": {
+      "seed_hex": "0202020202020202020202020202020202020202020202020202020202020202",
+      "x": "gTl3Dqh9F19Wo1Rmw0x-zMuNipG07jeiXfYPW4_Js5Q",
+      "kid": "aVBtapLd11SUVKIMGJfPzOEDuN0sXcmzJQNVT-_sKEU"
+    },
+    "new": {
+      "seed_hex": "0303030303030303030303030303030303030303030303030303030303030303",
+      "x": "7UkoxijRwsbq6QM4kFmVYSlZJzpcY_k2NsFGFKyHN9E",
+      "kid": "nRIE2VmKdMjL1JD7tbV7fXVgXxmv0GKnMFWRUJMTf9Q"
+    }
+  },
+  "pkce": {
+    "code_verifier": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
+    "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
+  },
+  "request": {
+    "$comment": "Signed by the service key. The URL is an example; any implementation must produce the same headers for the same inputs. verify_at is a time inside the validity window.",
+    "key": "service",
+    "method": "GET",
+    "url": "https://example.com/wp-json/site-portrait/v1/portrait?scopes=core,plugins",
+    "authority": "example.com",
+    "path": "/wp-json/site-portrait/v1/portrait",
+    "query": "?scopes=core,plugins",
+    "created": 1792400000,
+    "expires": 1792400300,
+    "nonce": "bWFkZS1mb3ItdGVzdGluZw",
+    "verify_at": 1792400010,
+    "signature_base": "\"@method\": GET\n\"@authority\": example.com\n\"@path\": /wp-json/site-portrait/v1/portrait\n\"@query\": ?scopes=core,plugins\n\"@signature-params\": (\"@method\" \"@authority\" \"@path\" \"@query\");created=1792400000;expires=1792400300;nonce=\"bWFkZS1mb3ItdGVzdGluZw\";keyid=\"UDDReOZl1ipXAfp9wYsm13sDBMK5og--QWdBjzuf6o4\";alg=\"ed25519\";tag=\"site-portrait/1\"",
+    "headers": {
+      "Signature-Input": "sp=(\"@method\" \"@authority\" \"@path\" \"@query\");created=1792400000;expires=1792400300;nonce=\"bWFkZS1mb3ItdGVzdGluZw\";keyid=\"UDDReOZl1ipXAfp9wYsm13sDBMK5og--QWdBjzuf6o4\";alg=\"ed25519\";tag=\"site-portrait/1\"",
+      "Signature": "sp=:BCOf82rkgP/WyuEMhL+8EJn9P9Z8Z0quKfLY2ghLzkiuICoNAMWZVBhJYbbelfkE/zEbDgzBXlqyFAwD50oNBA==:"
+    }
+  },
+  "response": {
+    "$comment": "Signed by the site key and bound to the request above through \"signature\";req;key=\"sp\".",
+    "key": "site",
+    "status": 200,
+    "content_type": "application/json; charset=UTF-8",
+    "body": "{\"ok\":true}",
+    "created": 1792400001,
+    "signature_base": "\"@status\": 200\n\"content-type\": application/json; charset=UTF-8\n\"content-digest\": sha-256=:QGLtr3UPuAdOfoPgyQKMlOMkaKi28WFHdDKO8EUVD5M=:\n\"signature\";req;key=\"sp\": :BCOf82rkgP/WyuEMhL+8EJn9P9Z8Z0quKfLY2ghLzkiuICoNAMWZVBhJYbbelfkE/zEbDgzBXlqyFAwD50oNBA==:\n\"@signature-params\": (\"@status\" \"content-type\" \"content-digest\" \"signature\";req;key=\"sp\");created=1792400001;keyid=\"aVBtapLd11SUVKIMGJfPzOEDuN0sXcmzJQNVT-_sKEU\";alg=\"ed25519\";tag=\"site-portrait/1\"",
+    "headers": {
+      "Content-Digest": "sha-256=:QGLtr3UPuAdOfoPgyQKMlOMkaKi28WFHdDKO8EUVD5M=:",
+      "Signature-Input": "sp=(\"@status\" \"content-type\" \"content-digest\" \"signature\";req;key=\"sp\");created=1792400001;keyid=\"aVBtapLd11SUVKIMGJfPzOEDuN0sXcmzJQNVT-_sKEU\";alg=\"ed25519\";tag=\"site-portrait/1\"",
+      "Signature": "sp=:RB+R308P9gAS41M/lWK4oVEiAGNAuSReP3aOzmo55wNQIbGs9V7R2G10u9kagVAP8WMv2Q3vAa1UBGetZtQZDQ==:"
+    }
+  },
+  "endorsement": {
+    "$comment": "Key \"new\" endorsed by key \"service\" (section 11).",
+    "signer": "service",
+    "endorsed": "new",
+    "message": "site-portrait/1 key-endorsement nRIE2VmKdMjL1JD7tbV7fXVgXxmv0GKnMFWRUJMTf9Q",
+    "sig": "2whhMLNOI50wh8SQIwO-ka3zfQUduDeJYsuolyt7xJfMEsjlwPwEatNVosebORX9LcMcoGiCOvfF6qI8QJQfBA"
+  }
+}

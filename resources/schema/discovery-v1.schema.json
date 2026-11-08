@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:site-portrait:discovery:1",
+  "$comment": "SPDX-License-Identifier: CC-BY-4.0. Part of the Site Portrait protocol specification (docs/PROTOCOL.md).",
+  "title": "Site Portrait discovery document (protocol version 1)",
+  "description": "Served by a service at /.well-known/site-portrait. See docs/PROTOCOL.md section 3.",
+  "type": "object",
+  "required": ["protocol", "protocol_versions", "service", "authorization_endpoint", "token_endpoint", "revocation_endpoint", "scopes_supported", "jwks"],
+  "properties": {
+    "protocol": { "const": "site-portrait" },
+    "protocol_versions": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[0-9]+$" },
+      "contains": { "const": "1" },
+      "minItems": 1
+    },
+    "service": {
+      "type": "object",
+      "required": ["name", "privacy_policy_url"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 500 },
+        "homepage": { "$ref": "#/$defs/https_url" },
+        "privacy_policy_url": { "$ref": "#/$defs/https_url" },
+        "terms_url": { "$ref": "#/$defs/https_url" },
+        "contact": { "type": "string", "maxLength": 200 }
+      }
+    },
+    "authorization_endpoint": { "$ref": "#/$defs/https_url" },
+    "token_endpoint": { "$ref": "#/$defs/https_url" },
+    "revocation_endpoint": { "$ref": "#/$defs/https_url" },
+    "scopes_supported": { "$ref": "#/$defs/scope_list" },
+    "scopes_requested": { "$ref": "#/$defs/scope_list" },
+    "scope_reasons": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/scope" },
+      "additionalProperties": { "type": "string", "maxLength": 300 }
+    },
+    "jwks": { "$ref": "#/$defs/jwks" }
+  },
+  "$defs": {
+    "https_url": { "type": "string", "format": "uri", "pattern": "^https://", "maxLength": 2048 },
+    "scope": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,31}$" },
+    "scope_list": { "type": "array", "items": { "$ref": "#/$defs/scope" }, "uniqueItems": true },
+    "b64url": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
+    "jwk": {
+      "type": "object",
+      "required": ["kty", "crv", "x", "kid"],
+      "properties": {
+        "kty": { "const": "OKP" },
+        "crv": { "const": "Ed25519" },
+        "x": { "$ref": "#/$defs/b64url", "minLength": 43, "maxLength": 43 },
+        "kid": { "$ref": "#/$defs/b64url", "minLength": 43, "maxLength": 43 },
+        "use": { "const": "sig" },
+        "alg": { "const": "Ed25519" },
+        "endorsements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["kid", "sig"],
+            "properties": {
+              "kid": { "$ref": "#/$defs/b64url" },
+              "sig": { "$ref": "#/$defs/b64url", "minLength": 86, "maxLength": 86 }
+            }
+          }
+        }
+      }
+    },
+    "jwks": {
+      "type": "object",
+      "required": ["keys"],
+      "properties": {
+        "keys": { "type": "array", "items": { "$ref": "#/$defs/jwk" }, "minItems": 1, "maxItems": 10 }
+      }
+    }
+  }
+}

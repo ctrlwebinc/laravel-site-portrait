@@ -1,0 +1,717 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:site-portrait:portrait:1",
+  "$comment": "SPDX-License-Identifier: CC-BY-4.0. Part of the Site Portrait protocol specification (docs/PROTOCOL.md).",
+  "title": "Site Portrait document (schema 1.x)",
+  "description": "Body of GET /site-portrait/v1/portrait. See docs/PROTOCOL.md section 8. Values that cannot be determined are null, never omitted. Sizes are bytes, durations seconds unless the name says otherwise. Minor schema versions only add optional members; receivers must ignore unknown members. Version 1.1.0 added the platform member and the laravel, packages and storage scopes.",
+  "type": "object",
+  "required": ["schema_version", "protocol_version", "generated_at", "generation_time_ms", "pairing_id", "mode", "site_id", "site", "plugin", "scopes_returned", "scopes_denied", "data", "warnings"],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$" },
+    "protocol_version": { "const": "1" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "generation_time_ms": { "type": "integer", "minimum": 0 },
+    "pairing_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" },
+    "mode": { "enum": ["single", "network"] },
+    "site_id": { "type": ["integer", "null"], "minimum": 1, "description": "Blog ID when a single site of a network was requested, otherwise null." },
+    "site": {
+      "type": "object",
+      "required": ["home_url", "site_url", "name"],
+      "properties": {
+        "home_url": { "type": "string", "format": "uri" },
+        "site_url": { "type": "string", "format": "uri" },
+        "name": { "type": "string" }
+      }
+    },
+    "platform": { "$ref": "#/$defs/platform" },
+    "plugin": {
+      "type": "object",
+      "description": "The site-side implementation of the protocol (WordPress plugin, Laravel package…), not the platform.",
+      "required": ["version"],
+      "properties": { "version": { "type": "string", "description": "Version of the site-side implementation." } }
+    },
+    "scopes_returned": { "$ref": "#/$defs/scope_list" },
+    "scopes_denied": { "$ref": "#/$defs/scope_list" },
+    "data": {
+      "type": "object",
+      "properties": {
+        "core": { "oneOf": [{ "$ref": "#/$defs/core" }, { "type": "null" }] },
+        "plugins": { "oneOf": [{ "$ref": "#/$defs/plugins" }, { "type": "null" }] },
+        "themes": { "oneOf": [{ "$ref": "#/$defs/themes" }, { "type": "null" }] },
+        "server": { "oneOf": [{ "$ref": "#/$defs/server" }, { "type": "null" }] },
+        "database": { "oneOf": [{ "$ref": "#/$defs/database" }, { "type": "null" }] },
+        "content": { "oneOf": [{ "$ref": "#/$defs/content" }, { "type": "null" }] },
+        "users_counts": { "oneOf": [{ "$ref": "#/$defs/users_counts" }, { "type": "null" }] },
+        "laravel": { "oneOf": [{ "$ref": "#/$defs/laravel" }, { "type": "null" }] },
+        "packages": { "oneOf": [{ "$ref": "#/$defs/packages" }, { "type": "null" }] },
+        "storage": { "oneOf": [{ "$ref": "#/$defs/storage" }, { "type": "null" }] }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scope", "code", "message"],
+        "properties": {
+          "scope": { "$ref": "#/$defs/scope" },
+          "field": { "type": ["string", "null"], "description": "Dot path inside data.<scope>, or null for the whole scope." },
+          "code": { "enum": ["unavailable", "timeout", "partial", "permission_denied", "collector_error"] },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "scope": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,31}$" },
+    "scope_list": { "type": "array", "items": { "$ref": "#/$defs/scope" }, "uniqueItems": true },
+    "nstr": { "type": ["string", "null"] },
+    "nint": { "type": ["integer", "null"], "minimum": 0 },
+    "nbool": { "type": ["boolean", "null"] },
+    "nbytes": { "type": ["integer", "null"], "minimum": 0, "description": "Size in bytes, or null if unknown. -1 is never used; unlimited values are reported as null with an 'unlimited' flag where relevant." },
+    "extensions": {
+      "type": "object",
+      "description": "Data added by third-party code through the implementation's extension mechanism (e.g. the site_portrait_scope_data filter on WordPress), keyed by the extension's slug.",
+      "additionalProperties": { "type": "object" }
+    },
+    "platform": {
+      "type": "object",
+      "description": "Software the site runs on (schema 1.1.0). When absent, the platform is wordpress.",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,31}$", "description": "Lower-case identifier. Defined values: wordpress, laravel." },
+        "version": { "$ref": "#/$defs/nstr", "description": "Platform version (WordPress or Laravel framework version)." },
+        "distribution": { "$ref": "#/$defs/nstr", "description": "WordPress only, best effort: bedrock, radicle, wordplate, wpstarter, composer (core installed by Composer, no known distribution), or null (classic install or not detected). Receivers must ignore unknown values." },
+        "distribution_version": { "$ref": "#/$defs/nstr", "description": "WordPress only, best effort: version of the distribution's package when known." },
+        "composer_managed": { "type": "boolean", "description": "WordPress only, best effort: the core is installed by Composer." },
+        "acorn": { "$ref": "#/$defs/nstr", "description": "WordPress only, best effort: installed version of roots/acorn, or null." }
+      }
+    },
+    "update": {
+      "type": ["object", "null"],
+      "description": "Null when no update information is known (e.g. not hosted on WordPress.org and no update API).",
+      "required": ["available", "version"],
+      "properties": {
+        "available": { "type": "boolean" },
+        "version": { "$ref": "#/$defs/nstr" }
+      }
+    },
+
+    "core": {
+      "type": "object",
+      "required": ["wp_version", "core_update", "locale", "languages_installed", "timezone", "environment_type", "multisite", "https", "permalink_structure", "constants", "memory_limits", "cron", "cache"],
+      "properties": {
+        "wp_version": { "type": "string" },
+        "core_update": {
+          "type": "object",
+          "required": ["status", "version"],
+          "properties": {
+            "status": { "enum": ["latest", "upgrade", "development", "unknown"] },
+            "version": { "$ref": "#/$defs/nstr" }
+          }
+        },
+        "core_auto_update": { "enum": ["all", "minor", "disabled", null] },
+        "locale": { "type": "string" },
+        "languages_installed": { "type": "array", "items": { "type": "string" } },
+        "timezone": { "type": "string", "description": "IANA name or UTC offset such as UTC+2." },
+        "environment_type": { "enum": ["production", "staging", "development", "local"] },
+        "multisite": {
+          "type": "object",
+          "required": ["enabled", "subdomain_install", "sites_count"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "subdomain_install": { "$ref": "#/$defs/nbool" },
+            "sites_count": { "$ref": "#/$defs/nint" }
+          }
+        },
+        "https": {
+          "type": "object",
+          "required": ["home_url", "site_url", "force_ssl_admin"],
+          "properties": {
+            "home_url": { "type": "boolean" },
+            "site_url": { "type": "boolean" },
+            "force_ssl_admin": { "type": "boolean" }
+          }
+        },
+        "permalink_structure": { "enum": ["plain", "pretty", "pathinfo"] },
+        "constants": {
+          "type": "object",
+          "description": "Booleans only; never the value of secret constants.",
+          "properties": {
+            "WP_DEBUG": { "$ref": "#/$defs/nbool" },
+            "WP_DEBUG_LOG": { "$ref": "#/$defs/nbool" },
+            "WP_DEBUG_DISPLAY": { "$ref": "#/$defs/nbool" },
+            "SCRIPT_DEBUG": { "$ref": "#/$defs/nbool" },
+            "SAVEQUERIES": { "$ref": "#/$defs/nbool" },
+            "WP_CACHE": { "$ref": "#/$defs/nbool" },
+            "DISALLOW_FILE_EDIT": { "$ref": "#/$defs/nbool" },
+            "DISALLOW_FILE_MODS": { "$ref": "#/$defs/nbool" },
+            "AUTOMATIC_UPDATER_DISABLED": { "$ref": "#/$defs/nbool" },
+            "CONCATENATE_SCRIPTS": { "$ref": "#/$defs/nbool" },
+            "COMPRESS_SCRIPTS": { "$ref": "#/$defs/nbool" }
+          },
+          "additionalProperties": { "$ref": "#/$defs/nbool" }
+        },
+        "memory_limits": {
+          "type": "object",
+          "required": ["wp_memory_limit", "wp_max_memory_limit"],
+          "properties": {
+            "wp_memory_limit": { "$ref": "#/$defs/nbytes" },
+            "wp_max_memory_limit": { "$ref": "#/$defs/nbytes" }
+          }
+        },
+        "cron": {
+          "type": "object",
+          "required": ["disabled", "alternate", "events_count", "overdue_count", "hooks_count"],
+          "properties": {
+            "disabled": { "type": "boolean", "description": "DISABLE_WP_CRON." },
+            "alternate": { "type": "boolean", "description": "ALTERNATE_WP_CRON." },
+            "events_count": { "$ref": "#/$defs/nint" },
+            "overdue_count": { "$ref": "#/$defs/nint", "description": "Events more than 1 hour late." },
+            "hooks_count": { "$ref": "#/$defs/nint" }
+          }
+        },
+        "cache": {
+          "type": "object",
+          "required": ["object_cache", "page_cache"],
+          "properties": {
+            "object_cache": {
+              "type": "object",
+              "required": ["persistent", "dropin", "backend"],
+              "properties": {
+                "persistent": { "type": "boolean", "description": "wp_using_ext_object_cache()." },
+                "dropin": { "type": "boolean", "description": "object-cache.php present." },
+                "backend": { "$ref": "#/$defs/nstr", "description": "Best guess: redis, memcached, apcu, other, or null." },
+                "available_extensions": { "type": "array", "items": { "enum": ["redis", "memcache", "memcached", "apcu"] } }
+              }
+            },
+            "page_cache": {
+              "type": "object",
+              "required": ["advanced_cache_dropin", "wp_cache_constant"],
+              "properties": {
+                "advanced_cache_dropin": { "type": "boolean" },
+                "wp_cache_constant": { "type": "boolean" }
+              }
+            }
+          }
+        },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+
+    "plugin_item": {
+      "type": "object",
+      "required": ["file", "slug", "name", "version", "active", "network_active", "auto_update", "update"],
+      "properties": {
+        "file": { "type": "string", "description": "Plugin basename relative to the plugins directory, e.g. akismet/akismet.php." },
+        "slug": { "type": "string" },
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "active": { "type": "boolean", "description": "Network-wide portrait: active on at least one site or network-active." },
+        "network_active": { "type": "boolean" },
+        "active_sites": { "$ref": "#/$defs/nint", "description": "Network-wide portrait only: number of sites where the plugin is active (excluding network activation)." },
+        "auto_update": { "type": "boolean" },
+        "update": { "$ref": "#/$defs/update" },
+        "requires_wp": { "$ref": "#/$defs/nstr" },
+        "requires_php": { "$ref": "#/$defs/nstr" }
+      }
+    },
+    "plugins": {
+      "type": "object",
+      "required": ["counts", "items", "must_use", "dropins"],
+      "properties": {
+        "counts": {
+          "type": "object",
+          "required": ["total", "active", "inactive", "updates_available", "must_use", "dropins"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "active": { "type": "integer", "minimum": 0 },
+            "inactive": { "type": "integer", "minimum": 0 },
+            "updates_available": { "type": "integer", "minimum": 0 },
+            "must_use": { "type": "integer", "minimum": 0 },
+            "dropins": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/plugin_item" } },
+        "must_use": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["file", "name", "version"],
+            "properties": {
+              "file": { "type": "string" },
+              "name": { "type": "string" },
+              "version": { "$ref": "#/$defs/nstr" }
+            }
+          }
+        },
+        "dropins": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["file"],
+            "properties": {
+              "file": { "type": "string", "description": "e.g. object-cache.php" },
+              "name": { "$ref": "#/$defs/nstr" }
+            }
+          }
+        },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+
+    "theme_item": {
+      "type": "object",
+      "required": ["slug", "name", "version", "active", "parent_of_active", "parent_slug", "block_theme", "auto_update", "update"],
+      "properties": {
+        "slug": { "type": "string" },
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "active": { "type": "boolean" },
+        "parent_of_active": { "type": "boolean" },
+        "parent_slug": { "$ref": "#/$defs/nstr" },
+        "block_theme": { "$ref": "#/$defs/nbool" },
+        "auto_update": { "type": "boolean" },
+        "update": { "$ref": "#/$defs/update" }
+      }
+    },
+    "themes": {
+      "type": "object",
+      "required": ["active", "counts", "items"],
+      "properties": {
+        "active": { "type": "string", "description": "Slug of the active theme." },
+        "counts": {
+          "type": "object",
+          "required": ["total", "updates_available"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "updates_available": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/theme_item" } },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+
+    "server": {
+      "type": "object",
+      "required": ["os", "web_server", "php", "cpu", "memory", "disk", "libraries"],
+      "properties": {
+        "os": {
+          "type": "object",
+          "required": ["family", "architecture", "containerized"],
+          "properties": {
+            "family": { "type": "string", "description": "PHP_OS_FAMILY: Linux, Windows, BSD, Darwin…" },
+            "architecture": { "$ref": "#/$defs/nstr" },
+            "containerized": { "$ref": "#/$defs/nbool", "description": "A cgroup limit or container marker was detected." }
+          }
+        },
+        "web_server": {
+          "type": "object",
+          "required": ["software"],
+          "properties": {
+            "software": { "$ref": "#/$defs/nstr", "description": "SERVER_SOFTWARE, e.g. nginx/1.27.0 or Apache." },
+            "http2": { "$ref": "#/$defs/nbool" }
+          }
+        },
+        "php": {
+          "type": "object",
+          "required": ["version", "sapi", "bits", "extensions", "ini", "opcache"],
+          "properties": {
+            "version": { "type": "string" },
+            "sapi": { "type": "string" },
+            "bits": { "enum": [32, 64] },
+            "extensions": { "type": "array", "items": { "type": "string" } },
+            "ini": {
+              "type": "object",
+              "required": ["memory_limit", "max_execution_time", "max_input_time", "max_input_vars", "post_max_size", "upload_max_filesize", "allow_url_fopen", "display_errors", "disabled_functions_count"],
+              "properties": {
+                "memory_limit": { "$ref": "#/$defs/nbytes", "description": "null when unlimited (-1)." },
+                "max_execution_time": { "$ref": "#/$defs/nint", "description": "0 means unlimited." },
+                "max_input_time": { "type": ["integer", "null"] },
+                "max_input_vars": { "$ref": "#/$defs/nint" },
+                "post_max_size": { "$ref": "#/$defs/nbytes" },
+                "upload_max_filesize": { "$ref": "#/$defs/nbytes" },
+                "max_file_uploads": { "$ref": "#/$defs/nint" },
+                "allow_url_fopen": { "$ref": "#/$defs/nbool" },
+                "display_errors": { "$ref": "#/$defs/nbool" },
+                "disabled_functions_count": { "$ref": "#/$defs/nint" }
+              }
+            },
+            "opcache": {
+              "type": "object",
+              "required": ["enabled"],
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "jit": { "$ref": "#/$defs/nbool" },
+                "memory_size": { "$ref": "#/$defs/nbytes" },
+                "memory_used": { "$ref": "#/$defs/nbytes" },
+                "hit_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+                "cached_scripts": { "$ref": "#/$defs/nint" }
+              }
+            }
+          }
+        },
+        "cpu": {
+          "type": "object",
+          "required": ["count", "model", "cgroup_quota", "load_average"],
+          "properties": {
+            "count": { "$ref": "#/$defs/nint", "description": "Logical CPUs visible to the host (/proc/cpuinfo)." },
+            "model": { "$ref": "#/$defs/nstr" },
+            "cgroup_quota": { "type": ["number", "null"], "minimum": 0, "description": "CPUs allowed by cgroup cpu.max, null if unlimited or unknown." },
+            "load_average": {
+              "type": ["array", "null"],
+              "items": { "type": "number", "minimum": 0 },
+              "minItems": 3,
+              "maxItems": 3
+            }
+          }
+        },
+        "memory": {
+          "type": "object",
+          "required": ["total", "available", "cgroup_limit"],
+          "properties": {
+            "total": { "$ref": "#/$defs/nbytes" },
+            "available": { "$ref": "#/$defs/nbytes" },
+            "cgroup_limit": { "$ref": "#/$defs/nbytes", "description": "memory.max, null if unlimited or unknown." },
+            "swap_total": { "$ref": "#/$defs/nbytes" }
+          }
+        },
+        "disk": {
+          "type": "object",
+          "required": ["free", "total"],
+          "description": "Volume holding the site's writable data (wp-content on WordPress, storage on Laravel).",
+          "properties": {
+            "free": { "$ref": "#/$defs/nbytes" },
+            "total": { "$ref": "#/$defs/nbytes" }
+          }
+        },
+        "libraries": {
+          "type": "object",
+          "properties": {
+            "curl": { "$ref": "#/$defs/nstr" },
+            "openssl": { "$ref": "#/$defs/nstr" },
+            "gd": { "$ref": "#/$defs/nstr" },
+            "imagick": { "$ref": "#/$defs/nstr" },
+            "icu": { "$ref": "#/$defs/nstr" },
+            "sodium": { "enum": ["native", "polyfill", null] }
+          },
+          "additionalProperties": { "$ref": "#/$defs/nstr" }
+        },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+
+    "database": {
+      "type": "object",
+      "required": ["engine", "server_version", "client", "charset", "collate", "size", "tables", "options", "transients_count", "variables"],
+      "properties": {
+        "engine": { "enum": ["mysql", "mariadb", "sqlite", "pgsql", "sqlsrv", "other"], "description": "pgsql and sqlsrv were added in schema 1.1.0." },
+        "server_version": { "$ref": "#/$defs/nstr" },
+        "client": { "$ref": "#/$defs/nstr", "description": "PHP client extension and version, e.g. mysqlnd 8.3.12." },
+        "charset": { "$ref": "#/$defs/nstr" },
+        "collate": { "$ref": "#/$defs/nstr" },
+        "size": {
+          "type": "object",
+          "required": ["data", "index", "total"],
+          "properties": {
+            "data": { "$ref": "#/$defs/nbytes" },
+            "index": { "$ref": "#/$defs/nbytes" },
+            "total": { "$ref": "#/$defs/nbytes" }
+          }
+        },
+        "tables": {
+          "type": "object",
+          "required": ["count", "site_count", "largest"],
+          "properties": {
+            "count": { "$ref": "#/$defs/nint", "description": "All tables in the database schema." },
+            "site_count": { "$ref": "#/$defs/nint", "description": "WordPress only: tables using this site's prefix. null on other platforms." },
+            "largest": {
+              "type": "array",
+              "maxItems": 10,
+              "items": {
+                "type": "object",
+                "required": ["name", "engine", "rows", "data", "index"],
+                "properties": {
+                  "name": { "type": "string", "description": "Table name with the site or connection prefix removed (e.g. posts, wc_orders, jobs)." },
+                  "engine": { "$ref": "#/$defs/nstr" },
+                  "rows": { "$ref": "#/$defs/nint", "description": "Approximate (information_schema)." },
+                  "data": { "$ref": "#/$defs/nbytes" },
+                  "index": { "$ref": "#/$defs/nbytes" }
+                }
+              }
+            }
+          }
+        },
+        "options": {
+          "type": ["object", "null"],
+          "description": "WordPress only: the options table. null on other platforms.",
+          "required": ["count", "autoload_count", "autoload_size"],
+          "properties": {
+            "count": { "$ref": "#/$defs/nint" },
+            "autoload_count": { "$ref": "#/$defs/nint" },
+            "autoload_size": { "$ref": "#/$defs/nbytes" }
+          }
+        },
+        "transients_count": { "$ref": "#/$defs/nint", "description": "WordPress only. null on other platforms." },
+        "variables": {
+          "type": "object",
+          "description": "Selected server variables relevant to sizing.",
+          "properties": {
+            "max_connections": { "$ref": "#/$defs/nint" },
+            "max_allowed_packet": { "$ref": "#/$defs/nbytes" },
+            "innodb_buffer_pool_size": { "$ref": "#/$defs/nbytes" }
+          },
+          "additionalProperties": { "type": ["integer", "string", "null"] }
+        },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+
+    "content": {
+      "type": "object",
+      "required": ["post_types", "revisions_count", "attachments", "taxonomies", "comments", "sizes"],
+      "properties": {
+        "post_types": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "registered", "builtin", "public", "counts"],
+            "properties": {
+              "name": { "type": "string" },
+              "registered": { "type": "boolean", "description": "False when posts of this type exist but no code registers the type (e.g. plugin deactivated)." },
+              "builtin": { "type": "boolean" },
+              "public": { "$ref": "#/$defs/nbool" },
+              "counts": {
+                "type": "object",
+                "description": "Post count per status (publish, draft, pending, private, future, trash, and custom statuses) plus total.",
+                "required": ["total"],
+                "additionalProperties": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        },
+        "revisions_count": { "$ref": "#/$defs/nint" },
+        "attachments": {
+          "type": "object",
+          "required": ["total", "by_type"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "by_type": {
+              "type": "object",
+              "description": "Count per top-level MIME type (image, video, audio, application, text, other).",
+              "additionalProperties": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "taxonomies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "registered", "builtin", "public", "terms_count"],
+            "properties": {
+              "name": { "type": "string" },
+              "registered": { "type": "boolean" },
+              "builtin": { "type": "boolean" },
+              "public": { "$ref": "#/$defs/nbool" },
+              "terms_count": { "$ref": "#/$defs/nint" }
+            }
+          }
+        },
+        "comments": {
+          "type": "object",
+          "required": ["approved", "pending", "spam", "trash", "total"],
+          "properties": {
+            "approved": { "type": "integer", "minimum": 0 },
+            "pending": { "type": "integer", "minimum": 0 },
+            "spam": { "type": "integer", "minimum": 0 },
+            "trash": { "type": "integer", "minimum": 0 },
+            "total": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "sizes": {
+          "type": "object",
+          "required": ["uploads", "wp_content", "plugins", "themes", "computed_at"],
+          "properties": {
+            "uploads": { "$ref": "#/$defs/nbytes" },
+            "wp_content": { "$ref": "#/$defs/nbytes" },
+            "plugins": { "$ref": "#/$defs/nbytes" },
+            "themes": { "$ref": "#/$defs/nbytes" },
+            "computed_at": { "type": ["string", "null"], "format": "date-time" }
+          }
+        },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+
+    "users_counts": {
+      "type": "object",
+      "required": ["total", "by_role"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "by_role": {
+          "type": "object",
+          "description": "Role slug → number of users. Users without a role are counted under 'none'. In a network-wide portrait, role assignments are summed over sites (a user with roles on two sites counts twice).",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "network_total": { "$ref": "#/$defs/nint", "description": "Multisite only: users in the whole network (each user once)." },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+
+    "laravel": {
+      "type": "object",
+      "description": "Laravel platform scope (schema 1.1.0). Driver names only, never connection settings, hosts, queue or channel names, route URIs or scheduled commands.",
+      "required": ["version", "environment_type", "debug", "maintenance", "timezone", "locale", "https", "optimizations", "drivers", "octane", "ecosystem", "queue", "schedule", "routes_count", "commands_count"],
+      "properties": {
+        "version": { "$ref": "#/$defs/nstr", "description": "Laravel framework version, e.g. 12.30.1." },
+        "environment_type": { "enum": ["production", "staging", "development", "local", null], "description": "APP_ENV mapped to the common vocabulary: production, staging and local as is, dev and development to development; any other value (e.g. testing) is null." },
+        "debug": { "$ref": "#/$defs/nbool", "description": "app.debug." },
+        "maintenance": { "$ref": "#/$defs/nbool", "description": "The application is in maintenance mode." },
+        "timezone": { "$ref": "#/$defs/nstr", "description": "app.timezone (IANA name)." },
+        "locale": { "$ref": "#/$defs/nstr", "description": "app.locale." },
+        "https": { "$ref": "#/$defs/nbool", "description": "APP_URL uses https." },
+        "optimizations": {
+          "type": "object",
+          "required": ["config_cached", "routes_cached", "events_cached"],
+          "properties": {
+            "config_cached": { "$ref": "#/$defs/nbool" },
+            "routes_cached": { "$ref": "#/$defs/nbool" },
+            "events_cached": { "$ref": "#/$defs/nbool" }
+          }
+        },
+        "drivers": {
+          "type": "object",
+          "description": "Name of the driver of each default connection or store (e.g. redis, database, file, s3, log). Never the connection name or its settings.",
+          "required": ["cache", "session", "queue", "mail", "broadcasting", "filesystem", "filesystem_cloud", "log"],
+          "properties": {
+            "cache": { "$ref": "#/$defs/nstr" },
+            "session": { "$ref": "#/$defs/nstr" },
+            "queue": { "$ref": "#/$defs/nstr" },
+            "mail": { "$ref": "#/$defs/nstr" },
+            "broadcasting": { "$ref": "#/$defs/nstr" },
+            "filesystem": { "$ref": "#/$defs/nstr" },
+            "filesystem_cloud": { "$ref": "#/$defs/nstr" },
+            "log": { "$ref": "#/$defs/nstr" }
+          }
+        },
+        "octane": {
+          "type": "object",
+          "required": ["enabled", "server"],
+          "properties": {
+            "enabled": { "type": "boolean", "description": "Laravel Octane is installed and configured." },
+            "server": { "$ref": "#/$defs/nstr", "description": "octane.server: swoole, roadrunner, frankenphp, or null." }
+          }
+        },
+        "ecosystem": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "First-party and well-known packages detected, as short lower-case identifiers (e.g. horizon, pulse, telescope, reverb, nova, filament, livewire, inertia).",
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" }
+        },
+        "queue": {
+          "type": "object",
+          "required": ["pending_jobs", "failed_jobs", "batches"],
+          "properties": {
+            "pending_jobs": { "$ref": "#/$defs/nint", "description": "Jobs waiting on the default queue of the default connection." },
+            "failed_jobs": { "$ref": "#/$defs/nint" },
+            "batches": { "$ref": "#/$defs/nint", "description": "Rows in the job batches table." }
+          }
+        },
+        "schedule": {
+          "type": "object",
+          "required": ["tasks_count", "by_frequency"],
+          "properties": {
+            "tasks_count": { "$ref": "#/$defs/nint" },
+            "by_frequency": {
+              "type": ["object", "null"],
+              "description": "Number of scheduled tasks per cron expression (five fields separated by single spaces, e.g. \"* * * * *\"); tasks that repeat more than once a minute are counted under \"sub_minute\". Never the command or its arguments.",
+              "additionalProperties": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "routes_count": { "$ref": "#/$defs/nint" },
+        "commands_count": { "$ref": "#/$defs/nint", "description": "Registered Artisan commands." },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+
+    "package_item": {
+      "type": "object",
+      "required": ["name", "version", "type", "direct", "dev"],
+      "properties": {
+        "name": { "type": "string", "description": "Composer package name, e.g. laravel/framework." },
+        "version": { "$ref": "#/$defs/nstr", "description": "Installed (pretty) version, e.g. v12.30.1 or dev-main." },
+        "type": { "$ref": "#/$defs/nstr", "description": "Composer package type, e.g. library." },
+        "direct": { "type": "boolean", "description": "Listed in the root require or require-dev." },
+        "dev": { "type": "boolean", "description": "Installed only as a development dependency." }
+      }
+    },
+    "packages": {
+      "type": "object",
+      "description": "Installed Composer packages (schema 1.1.0). Never repository or dist URLs, which may embed tokens.",
+      "required": ["counts", "items", "platform"],
+      "properties": {
+        "counts": {
+          "type": "object",
+          "description": "Counts include packages the administrator chose to hide from items.",
+          "required": ["total", "direct", "dev", "direct_dev"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "direct": { "type": "integer", "minimum": 0, "description": "Direct dependencies (require and require-dev)." },
+            "dev": { "type": "integer", "minimum": 0, "description": "Development dependencies, direct or not." },
+            "direct_dev": { "type": "integer", "minimum": 0, "description": "Direct development dependencies (require-dev)." }
+          }
+        },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/package_item" } },
+        "platform": {
+          "type": "object",
+          "description": "Platform requirements of the root package.",
+          "required": ["php", "extensions"],
+          "properties": {
+            "php": { "$ref": "#/$defs/nstr", "description": "PHP version constraint, e.g. ^8.2." },
+            "extensions": { "type": "array", "uniqueItems": true, "description": "Required PHP extensions, lower-case, without the ext- prefix (same form as server.php.extensions).", "items": { "type": "string" } }
+          }
+        },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+
+    "storage": {
+      "type": "object",
+      "description": "Sizes of the application's directories and disks (schema 1.1.0), computed with a time budget and cached (section 8.4).",
+      "required": ["sizes", "disks"],
+      "properties": {
+        "sizes": {
+          "type": "object",
+          "required": ["app", "app_public", "logs", "framework_cache", "framework_sessions", "framework_views", "public", "vendor", "node_modules", "computed_at"],
+          "properties": {
+            "app": { "$ref": "#/$defs/nbytes", "description": "storage/app, including app_public." },
+            "app_public": { "$ref": "#/$defs/nbytes", "description": "storage/app/public." },
+            "logs": { "$ref": "#/$defs/nbytes", "description": "storage/logs." },
+            "framework_cache": { "$ref": "#/$defs/nbytes", "description": "storage/framework/cache." },
+            "framework_sessions": { "$ref": "#/$defs/nbytes", "description": "storage/framework/sessions." },
+            "framework_views": { "$ref": "#/$defs/nbytes", "description": "storage/framework/views." },
+            "public": { "$ref": "#/$defs/nbytes", "description": "public directory." },
+            "vendor": { "$ref": "#/$defs/nbytes" },
+            "node_modules": { "$ref": "#/$defs/nbytes", "description": "null when absent." },
+            "computed_at": { "type": ["string", "null"], "format": "date-time" }
+          }
+        },
+        "disks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "driver", "default", "size"],
+            "properties": {
+              "name": { "type": "string", "description": "Disk name from the filesystems configuration." },
+              "driver": { "$ref": "#/$defs/nstr", "description": "e.g. local, s3, ftp." },
+              "default": { "type": "boolean", "description": "The default disk." },
+              "size": { "$ref": "#/$defs/nbytes", "description": "Only for local disks; null for remote disks (never listed)." }
+            }
+          }
+        },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    }
+  }
+}

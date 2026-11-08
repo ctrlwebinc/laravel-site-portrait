@@ -1,0 +1,62 @@
+{
+    "name": "ctrlweb/laravel-site-portrait",
+    "description": "Site Portrait protocol for Laravel: lets a service chosen by the site owner securely read a privacy-minimised technical portrait of the application.",
+    "keywords": ["laravel", "site-portrait", "hosting", "http-message-signatures", "rfc9421", "ed25519"],
+    "homepage": "https://github.com/ctrlwebinc/laravel-site-portrait",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "ctrlweb",
+            "homepage": "https://ctrlweb.ca"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^11.0 || ^12.0 || ^13.0",
+        "paragonie/sodium_compat": "^1.21 || ^2.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.18",
+        "opis/json-schema": "^2.4",
+        "orchestra/testbench": "^9.0 || ^10.0 || ^11.0",
+        "phpunit/phpunit": "^11.0 || ^12.0"
+    },
+    "suggest": {
+        "ext-sodium": "Native Ed25519 (faster than the bundled polyfill)."
+    },
+    "autoload": {
+        "psr-4": {
+            "Ctrlweb\\SitePortrait\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ctrlweb\\SitePortrait\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Ctrlweb\\SitePortrait\\SitePortraitServiceProvider"
+            ],
+            "aliases": {
+                "SitePortrait": "Ctrlweb\\SitePortrait\\Facades\\SitePortrait"
+            }
+        }
+    },
+    "scripts": {
+        "lint": "pint --test",
+        "format": "pint",
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "test": "phpunit",
+        "test:e2e": "node --test tests/e2e/interop.test.mjs"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
