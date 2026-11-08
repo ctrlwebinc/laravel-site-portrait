@@ -397,8 +397,8 @@ du service et ceux de la spec doivent rester identiques.
    le service de référence lancé en `--auto-approve`, un script Node qui exécute
    `site-portrait:pair --yes`, suit l'URL d'autorisation jusqu'au callback, attend la
    confirmation, puis `status`, `portrait --validate`, `rotate-key` + nouvel appel, `revoke`.
-   En CI, le dépôt site-portrait est récupéré à une révision épinglée (`actions/checkout` avec
-   `repository:`/`ref:`) ; en local via `SP_REFERENCE_DIR=../site-portrait`.
+   En CI, le dépôt site-portrait-protocol est récupéré à une révision épinglée (`actions/checkout` avec
+   `repository:`/`ref:`) ; en local, `../site-portrait-protocol` par défaut (`SP_REFERENCE_DIR` pour un autre chemin).
    Tant que le client de référence n'accepte pas les nouveaux scopes, l'e2e couvre
    `server`, `database`, `users_counts`.
 6. **Contrat avec ctrlweb-self-serve** : voir §3.
@@ -494,4 +494,4 @@ Côté **spec** (agent site-portrait) :
   - Un site en Laravel 11 qui installe le package devra faire de même, ou passer à Laravel 12.
 - **`Cache-Control`** : Symfony envoie `no-store, private` au lieu de `no-store`. C'est sans effet sur le protocole, car cet en-tête n'est pas signé.
 - **Mode maintenance** : `php artisan down` renvoie un 503 non signé sur toutes les routes, endpoints compris. Le service le traite comme une erreur temporaire, pas comme une révocation.
-- **Dépôts distants** : `ctrlwebinc/laravel-site-portrait` pour le package, `ctrlwebinc/wordpress-site-portrait` pour la spec et l'extension. La CI lit l'emplacement de la spec dans les variables `SP_REFERENCE_REPOSITORY` et `SP_REFERENCE_REF` (par défaut `ctrlwebinc/wordpress-site-portrait@main`) ; tant que la spec 1.1.0 n'est pas fusionnée dans `main`, régler `SP_REFERENCE_REF` sur `spec-1.1.0`.
+- **Dépôts distants** : `ctrlwebinc/laravel-site-portrait` pour le package, `ctrlwebinc/wordpress-site-portrait` pour l'extension, `ctrlwebinc/site-portrait-protocol` pour la spec, les schémas, les vecteurs de test et le service de référence. La CI lit l'emplacement de la spec dans les variables `SP_REFERENCE_REPOSITORY` et `SP_REFERENCE_REF` (par défaut `ctrlwebinc/site-portrait-protocol@v1.1.0`).

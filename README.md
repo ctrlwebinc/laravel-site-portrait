@@ -151,13 +151,15 @@ production.
 composer test            # PHPUnit (Orchestra Testbench), protocol test vectors included
 composer analyse         # Larastan
 composer lint            # Pint
-SP_REFERENCE_DIR=../site-portrait composer test:e2e   # interoperability with the reference service
+composer test:e2e        # interoperability with the reference service
 ```
 
 The end-to-end test serves a workbench application (`testbench.yaml`) and pairs
 it with the reference service of the specification (`bin/reference-client.mjs`
-in the site-portrait repository, which needs `npm install` for schema
-validation).
+in the [site-portrait-protocol](https://github.com/ctrlwebinc/site-portrait-protocol)
+repository, which needs `npm install` for schema validation). It looks for that
+repository in `../site-portrait-protocol`; set `SP_REFERENCE_DIR` to use
+another checkout.
 
 ## License
 

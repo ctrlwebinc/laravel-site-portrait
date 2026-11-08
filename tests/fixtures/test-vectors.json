@@ -1,5 +1,5 @@
 {
-  "$comment": "SPDX-License-Identifier: CC-BY-4.0. Machine-readable test vectors of the Site Portrait protocol, version 1 (docs/PROTOCOL.md section 15). The keys are derived from fixed seeds and MUST NOT be used outside tests. Binary values: seeds in hex; x, kid, PKCE and endorsement signatures in base64url without padding; HTTP signatures in base64 with padding, inside RFC 8941 byte sequences.",
+  "$comment": "SPDX-License-Identifier: CC-BY-4.0. Machine-readable test vectors of the Site Portrait protocol, version 1 (PROTOCOL.md section 15). The keys are derived from fixed seeds and MUST NOT be used outside tests. Binary values: seeds in hex; x, kid, PKCE and endorsement signatures in base64url without padding; HTTP signatures in base64 with padding, inside RFC 8941 byte sequences.",
   "protocol_version": "1",
   "keys": {
     "service": {

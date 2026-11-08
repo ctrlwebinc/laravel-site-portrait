@@ -10,7 +10,7 @@ use Ctrlweb\SitePortrait\Protocol\StructuredFields;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Test vectors of the specification (PROTOCOL.md §15, docs/test-vectors.json).
+ * Test vectors of the specification (PROTOCOL.md §15, test-vectors.json of site-portrait-protocol).
  */
 final class VectorsTest extends TestCase
 {

@@ -128,9 +128,9 @@ jobs:
       - name: Checkout the specification and reference client
         uses: actions/checkout@v4
         with:
-          repository: ${{ vars.SP_REFERENCE_REPOSITORY || 'ctrlwebinc/wordpress-site-portrait' }}
-          ref: ${{ vars.SP_REFERENCE_REF || 'main' }}
-          path: site-portrait
+          repository: ${{ vars.SP_REFERENCE_REPOSITORY || 'ctrlwebinc/site-portrait-protocol' }}
+          ref: ${{ vars.SP_REFERENCE_REF || 'v1.1.0' }}
+          path: site-portrait-protocol
           token: ${{ secrets.SP_REFERENCE_TOKEN || github.token }}
       - uses: shivammathur/setup-php@v2
         with:
@@ -141,14 +141,14 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci --ignore-scripts
-        working-directory: site-portrait
+        working-directory: site-portrait-protocol
       - run: composer update --prefer-dist --no-interaction --no-progress
       - name: Check that the bundled schemas and vectors match the specification
         run: |
-          diff -u site-portrait/docs/schema/portrait-v1.schema.json resources/schema/portrait-v1.schema.json
-          diff -u site-portrait/docs/schema/discovery-v1.schema.json resources/schema/discovery-v1.schema.json
-          diff -u site-portrait/docs/test-vectors.json tests/fixtures/test-vectors.json
+          diff -u site-portrait-protocol/schema/portrait-v1.schema.json resources/schema/portrait-v1.schema.json
+          diff -u site-portrait-protocol/schema/discovery-v1.schema.json resources/schema/discovery-v1.schema.json
+          diff -u site-portrait-protocol/test-vectors.json tests/fixtures/test-vectors.json
       - run: node --test tests/e2e/interop.test.mjs
         env:
-          SP_REFERENCE_DIR: site-portrait
+          SP_REFERENCE_DIR: site-portrait-protocol
           SP_E2E_LOGS: '1'

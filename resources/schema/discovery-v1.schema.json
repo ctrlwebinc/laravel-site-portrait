@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:site-portrait:discovery:1",
-  "$comment": "SPDX-License-Identifier: CC-BY-4.0. Part of the Site Portrait protocol specification (docs/PROTOCOL.md).",
+  "$comment": "SPDX-License-Identifier: CC-BY-4.0. Part of the Site Portrait protocol specification (PROTOCOL.md).",
   "title": "Site Portrait discovery document (protocol version 1)",
-  "description": "Served by a service at /.well-known/site-portrait. See docs/PROTOCOL.md section 3.",
+  "description": "Served by a service at /.well-known/site-portrait. See PROTOCOL.md section 3.",
   "type": "object",
   "required": ["protocol", "protocol_versions", "service", "authorization_endpoint", "token_endpoint", "revocation_endpoint", "scopes_supported", "jwks"],
   "properties": {

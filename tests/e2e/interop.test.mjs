@@ -1,10 +1,10 @@
 // End-to-end interoperability test: the Laravel workbench application (this
 // package) against the reference service of the Site Portrait specification.
 //
-//   SP_REFERENCE_DIR=../site-portrait node --test tests/e2e/interop.test.mjs
+//   SP_REFERENCE_DIR=../site-portrait-protocol node --test tests/e2e/interop.test.mjs
 //
-// Requires PHP, Composer dependencies, and a checkout of the specification
-// repository (bin/lib/*.mjs, docs/schema, and its node_modules for ajv).
+// Requires PHP, Composer dependencies, and a checkout of the protocol
+// repository (bin/lib/*.mjs, schema/, and its node_modules for ajv).
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
@@ -16,7 +16,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const REF = path.resolve(process.env.SP_REFERENCE_DIR ?? path.join(ROOT, '../site-portrait'));
+const REF = path.resolve(process.env.SP_REFERENCE_DIR ?? path.join(ROOT, '../site-portrait-protocol'));
 const SITE_PORT = 8765; // Must match APP_URL in testbench.yaml.
 const SITE = `http://127.0.0.1:${SITE_PORT}`;
 
@@ -60,7 +60,7 @@ async function validate(schemaFile, data) {
   const { default: addFormats } = await ref('node_modules/ajv-formats/dist/index.js');
   const ajv = new Ajv({ allErrors: true, strict: false });
   addFormats(ajv);
-  const schema = JSON.parse(fs.readFileSync(path.join(REF, 'docs/schema', schemaFile), 'utf8'));
+  const schema = JSON.parse(fs.readFileSync(path.join(REF, 'schema', schemaFile), 'utf8'));
   return ajv.validate(schema, data) ? [] : ajv.errors;
 }
 
