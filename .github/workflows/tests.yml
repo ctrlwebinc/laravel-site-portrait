@@ -128,7 +128,7 @@ jobs:
       - name: Checkout the specification and reference client
         uses: actions/checkout@v4
         with:
-          repository: ${{ vars.SP_REFERENCE_REPOSITORY || 'ctrlwebinc/site-portrait' }}
+          repository: ${{ vars.SP_REFERENCE_REPOSITORY || 'ctrlwebinc/wordpress-site-portrait' }}
           ref: ${{ vars.SP_REFERENCE_REF || 'main' }}
           path: site-portrait
           token: ${{ secrets.SP_REFERENCE_TOKEN || github.token }}
