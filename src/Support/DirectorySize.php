@@ -28,20 +28,22 @@ final class DirectorySize
     }
 
     /**
-     * Size in bytes, null when absent, unreadable or out of budget.
+     * Size in bytes and number of regular files, both null when the directory
+     * is absent, unreadable or out of budget.
      *
-     * @return array{size: int|null, timeout: bool}
+     * @return array{size: int|null, files: int|null, timeout: bool}
      */
     public function measure(string $path): array
     {
         if (! @is_dir($path) || @is_link($path)) {
-            return ['size' => null, 'timeout' => false];
+            return ['size' => null, 'files' => null, 'timeout' => false];
         }
         if ($this->expired()) {
-            return ['size' => null, 'timeout' => true];
+            return ['size' => null, 'files' => null, 'timeout' => true];
         }
 
         $size = 0;
+        $files = 0;
         try {
             $iterator = new \RecursiveIteratorIterator(
                 new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS),
@@ -52,17 +54,18 @@ final class DirectorySize
             foreach ($iterator as $file) {
                 /** @var \SplFileInfo $file */
                 if (++$i % 500 === 0 && $this->expired()) {
-                    return ['size' => null, 'timeout' => true];
+                    return ['size' => null, 'files' => null, 'timeout' => true];
                 }
                 if ($file->isLink() || ! $file->isFile()) {
                     continue;
                 }
                 $size += (int) $file->getSize();
+                $files++;
             }
         } catch (\Throwable) {
-            return ['size' => null, 'timeout' => false];
+            return ['size' => null, 'files' => null, 'timeout' => false];
         }
 
-        return ['size' => $size, 'timeout' => false];
+        return ['size' => $size, 'files' => $files, 'timeout' => false];
     }
 }

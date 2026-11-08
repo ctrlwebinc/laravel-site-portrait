@@ -102,7 +102,7 @@ When uninstalling the package, run
 | `packages` | Installed Composer packages (name, version, type, direct, dev), counts, PHP and extension requirements. Never repository URLs. Hide private packages by name with `hidden_packages` (they are still counted). |
 | `server` | OS family, architecture, container detection, web server, PHP version/SAPI/extensions/limits, OPcache, CPU and memory (including cgroup limits), disk space of the storage volume, library versions. |
 | `database` | Engine and version, charset, total size, table count and the ten largest tables (prefix stripped), a few server variables. |
-| `storage` | Sizes of `storage/app`, `storage/app/public`, logs, framework caches, `public`, `vendor`, `node_modules`, and of local filesystem disks (remote disks are never listed). Computed with a time budget and cached for an hour. |
+| `storage` | Sizes of `storage/app`, `storage/app/public`, logs, framework caches, `public`, `vendor`, `node_modules`, and of local filesystem disks (remote disks are never listed); number of files in `storage/app`, `storage/app/public` and `public`. Computed in one walk with a time budget and cached for an hour. |
 | `users_counts` | Number of users of the default auth provider, per role with spatie/laravel-permission. Counts only. |
 
 The WordPress-only scopes (`core`, `plugins`, `themes`, `content`) are not

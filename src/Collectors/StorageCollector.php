@@ -27,7 +27,8 @@ class StorageCollector implements Collector
         } catch (\Throwable) {
             $cached = null;
         }
-        if (! is_array($cached) || ! isset($cached['sizes'], $cached['disks'], $cached['timeout'])) {
+        // Entries cached by a version without file counts are recomputed.
+        if (! is_array($cached) || ! isset($cached['sizes'], $cached['files'], $cached['disks'], $cached['timeout'])) {
             $cached = $this->compute();
             if (! $cached['timeout']) {
                 try {
@@ -44,35 +45,46 @@ class StorageCollector implements Collector
 
         return [
             'sizes' => $cached['sizes'],
+            'files' => $cached['files'],
             'disks' => $cached['disks'],
         ];
     }
 
     /**
-     * @return array{sizes: array<string, int|string|null>, disks: list<array<string, mixed>>, timeout: bool}
+     * @return array{sizes: array<string, int|string|null>, files: array<string, int|string|null>, disks: list<array<string, mixed>>, timeout: bool}
      */
     protected function compute(): array
     {
         $budget = new DirectorySize((float) config('site-portrait.size_budget', 10));
         $timeout = false;
-        $measure = function (string $path) use ($budget, &$timeout): ?int {
+        $fileCounts = [];
+        $measure = function (string $path, ?string $countAs = null) use ($budget, &$timeout, &$fileCounts): ?int {
             $result = $budget->measure($path);
             $timeout = $timeout || $result['timeout'];
+            if ($countAs !== null) {
+                $fileCounts[$countAs] = $result['files'];
+            }
 
             return $result['size'];
         };
 
         $sizes = [
-            'app' => $measure(storage_path('app')),
-            'app_public' => $measure(storage_path('app/public')),
+            'app' => $measure(storage_path('app'), 'app'),
+            'app_public' => $measure(storage_path('app/public'), 'app_public'),
             'logs' => $measure(storage_path('logs')),
             'framework_cache' => $measure(storage_path('framework/cache')),
             'framework_sessions' => $measure(storage_path('framework/sessions')),
             'framework_views' => $measure(storage_path('framework/views')),
-            'public' => $measure(public_path()),
+            'public' => $measure(public_path(), 'public'),
             'vendor' => $measure(base_path('vendor')),
             'node_modules' => $measure(base_path('node_modules')),
             'computed_at' => Carbon::now('UTC')->format('Y-m-d\TH:i:s\Z'),
+        ];
+        $files = [
+            'app' => $fileCounts['app'] ?? null,
+            'app_public' => $fileCounts['app_public'] ?? null,
+            'public' => $fileCounts['public'] ?? null,
+            'computed_at' => $sizes['computed_at'],
         ];
 
         $default = config('filesystems.default');
@@ -94,6 +106,6 @@ class StorageCollector implements Collector
             ];
         }
 
-        return ['sizes' => $sizes, 'disks' => $disks, 'timeout' => $timeout];
+        return ['sizes' => $sizes, 'files' => $files, 'disks' => $disks, 'timeout' => $timeout];
     }
 }

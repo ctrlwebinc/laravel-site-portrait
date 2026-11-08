@@ -697,6 +697,17 @@
             "computed_at": { "type": ["string", "null"], "format": "date-time" }
           }
         },
+        "files": {
+          "type": "object",
+          "description": "Optional. Number of regular files, subdirectories included, symbolic links not followed. Counted during the same walk as sizes, with the same time budget and cache; null when the walk was interrupted. Lets services estimate media volume when a size is null.",
+          "required": ["app", "app_public", "public", "computed_at"],
+          "properties": {
+            "app": { "$ref": "#/$defs/nint", "description": "storage/app, including app_public." },
+            "app_public": { "$ref": "#/$defs/nint", "description": "storage/app/public." },
+            "public": { "$ref": "#/$defs/nint", "description": "public directory (the public/storage link is not followed)." },
+            "computed_at": { "type": ["string", "null"], "format": "date-time" }
+          }
+        },
         "disks": {
           "type": "array",
           "items": {

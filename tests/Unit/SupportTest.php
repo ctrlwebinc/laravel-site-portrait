@@ -7,6 +7,7 @@ namespace Ctrlweb\SitePortrait\Tests\Unit;
 use Ctrlweb\SitePortrait\Protocol\IpAllowlist;
 use Ctrlweb\SitePortrait\Protocol\StructuredFields;
 use Ctrlweb\SitePortrait\Support\Bytes;
+use Ctrlweb\SitePortrait\Support\DirectorySize;
 use Ctrlweb\SitePortrait\Support\SystemInfo;
 use PHPUnit\Framework\TestCase;
 
@@ -75,6 +76,34 @@ final class SupportTest extends TestCase
         $this->assertNull($info->cgroupMemoryLimit());
         $this->assertNull($info->cpu()['count']);
         $this->assertNull($info->memory()['total']);
+    }
+
+    public function test_directory_size_counts_regular_files_without_following_links(): void
+    {
+        $root = sys_get_temp_dir().'/sp-dirsize-'.bin2hex(random_bytes(4));
+        mkdir($root.'/sub/deeper', 0777, true);
+        file_put_contents($root.'/a.txt', '12345');
+        file_put_contents($root.'/sub/b.txt', '123');
+        file_put_contents($root.'/sub/deeper/c.txt', '1');
+        symlink($root.'/a.txt', $root.'/link.txt');
+        symlink($root.'/sub', $root.'/linked-dir');
+
+        try {
+            $budget = new DirectorySize(10);
+            $this->assertSame(['size' => 9, 'files' => 3, 'timeout' => false], $budget->measure($root));
+            $this->assertSame(['size' => null, 'files' => null, 'timeout' => false], $budget->measure($root.'/linked-dir'));
+            $this->assertSame(['size' => null, 'files' => null, 'timeout' => false], $budget->measure($root.'/missing'));
+            $this->assertSame(['size' => null, 'files' => null, 'timeout' => true], (new DirectorySize(0))->measure($root));
+        } finally {
+            unlink($root.'/link.txt');
+            unlink($root.'/linked-dir');
+            unlink($root.'/sub/deeper/c.txt');
+            unlink($root.'/sub/b.txt');
+            unlink($root.'/a.txt');
+            rmdir($root.'/sub/deeper');
+            rmdir($root.'/sub');
+            rmdir($root);
+        }
     }
 
     public function test_missing_root(): void

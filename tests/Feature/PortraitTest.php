@@ -6,6 +6,7 @@ namespace Ctrlweb\SitePortrait\Tests\Feature;
 
 use Ctrlweb\SitePortrait\Collectors\CollectContext;
 use Ctrlweb\SitePortrait\Collectors\LaravelCollector;
+use Ctrlweb\SitePortrait\Collectors\StorageCollector;
 use Ctrlweb\SitePortrait\Facades\SitePortrait;
 use Ctrlweb\SitePortrait\Portrait\PortraitBuilder;
 use Ctrlweb\SitePortrait\Tests\Concerns\ActsAsService;
@@ -13,6 +14,7 @@ use Ctrlweb\SitePortrait\Tests\TestCase;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Opis\JsonSchema\Errors\ErrorFormatter;
@@ -107,6 +109,21 @@ final class PortraitTest extends TestCase
         $hidden = $this->portrait(['packages'])['data']['packages'];
         $this->assertNotContains('laravel/framework', array_column($hidden['items'], 'name'));
         $this->assertSame($all['counts'], $hidden['counts']);
+    }
+
+    public function test_storage_scope_counts_files_and_recomputes_old_cache_entries(): void
+    {
+        // An entry cached by a version without file counts.
+        Cache::put(StorageCollector::CACHE_KEY, ['sizes' => ['app' => 1], 'disks' => [], 'timeout' => false]);
+
+        $data = $this->portrait(['storage'])['data']['storage'];
+        $this->assertSame(['app', 'app_public', 'public', 'computed_at'], array_keys($data['files']));
+        $this->assertSame($data['sizes']['computed_at'], $data['files']['computed_at']);
+        foreach (['app', 'app_public', 'public'] as $key) {
+            $this->assertIsInt($data['files'][$key], $key);
+        }
+        $this->assertGreaterThanOrEqual($data['files']['app_public'], $data['files']['app']);
+        $this->assertSame($data['files'], Cache::get(StorageCollector::CACHE_KEY)['files']);
     }
 
     public function test_failing_collector_yields_null_and_warning(): void

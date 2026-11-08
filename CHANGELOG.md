@@ -13,7 +13,8 @@ All notable changes to this package are documented here. The format follows
   `/revoke`), replay protection, rate limits, IP allow-list, access log, key
   rotation through endorsements, revocation in both directions.
 - Scopes `laravel`, `packages`, `server`, `database`, `storage` and
-  `users_counts` (portrait schema 1.1.0).
+  `users_counts` (portrait schema 1.1.0), including the file counts of
+  `storage.files`.
 - Artisan commands: install, pair, status, scopes, show, log, rotate-key,
   disconnect, forget, prune.
 - Extension point `SitePortrait::extend()`.
